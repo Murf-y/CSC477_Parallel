@@ -1,3 +1,9 @@
+"""
+Script used to create a folder with multiple copies of a file
+
+Usage: ./create_dups.sh <filename> <number of copies>
+"""
+
 # Check if the number of arguments is correct
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <filename> <number>"
