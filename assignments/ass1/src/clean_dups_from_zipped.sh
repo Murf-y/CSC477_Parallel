@@ -12,7 +12,7 @@ fi
 # For each file in the folder, if its name ends with gz, delete it
 for file in $(ls $1); do
     if [ ${file: -3} == ".gz" ]; then
-        rm $1/$file -v
+        rm $1/$file
     fi
 done
 
