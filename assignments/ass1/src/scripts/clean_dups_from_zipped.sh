@@ -2,6 +2,11 @@
 
 # Usage: ./clean_dups_from_zipped.sh <folder>
 
+# Check if the number of arguments is correct
+if [ $# -ne 1 ]; then
+    echo "Usage: ./clean_dups_from_zipped.sh <folder>"
+    exit 1
+fi
 
 # Check if folder exists
 if [ ! -d $1 ]; then

@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-
 int getNumCPUs();
 int countFiles(const char *folderPath);
-char ** listFiles(const char *folderPath);
+char **listFiles(const char *folderPath);

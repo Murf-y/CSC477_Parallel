@@ -42,8 +42,8 @@ char **listFiles(const char *folderPath)
     if (filesCount == -1)
     {
         filesList = (char **)malloc(sizeof(char *));
-        *filesList=NULL;
-        printf("Error opening directory <%s>\n",folderPath);
+        *filesList = NULL;
+        printf("Error opening directory <%s>\n", folderPath);
         return filesList;
     }
 
