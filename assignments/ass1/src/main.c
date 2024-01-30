@@ -30,8 +30,8 @@ Performance Analysis:
 
 void compressFile(char *fileName)
 {
-    // Command cannot be longer than 50 characters raw_command = 10, fileName = 20, compressedFileName = 20
 
+    // Command cannot be longer than 50 characters raw_command = 10, fileName = 20, compressedFileName = 20
     char *command = malloc(sizeof(char) * 50);
     strcpy(command, "gzip -k -f -1 ");
     strcat(command, fileName);
@@ -41,6 +41,9 @@ void compressFile(char *fileName)
 
 void clean_up(char *folder_name)
 {
+    /*
+        Deletes all already zipped files in the folder_name by running the clean script on it
+    */
     char *command = malloc(sizeof(char) * 50);
     strcpy(command, "bash -c \"./scripts/clean_dups_from_zipped.sh ");
     strcat(command, folder_name);
@@ -91,116 +94,122 @@ double sequential(char **filesList, int numberOfRuns)
 
 int parallelRunMethod1(char **filesList, int numberOfRuns)
 {
-    time_t start, end;
+    printf("running method 1");
+    return 1;
+    // time_t start, end;
 
-    start = time(NULL);
+    // start = time(NULL);
 
-    int pid;
-    while (*filesList != NULL)
-    {
-        pid = fork();
-        if (pid == 0)
-        {
-            compressFile(*filesList);
-            exit(0);
-        }
-        filesList++;
-    }
+    // int pid;
+    // while (*filesList != NULL)
+    // {
+    //     pid = fork();
+    //     if (pid == 0)
+    //     {
+    //         compressFile(*filesList);
+    //         exit(0);
+    //     }
+    //     filesList++;
+    // }
 
-    while (wait(NULL) > 0)
-        ;
+    // while (wait(NULL) > 0)
+    //     ;
 
-    end = time(NULL);
+    // end = time(NULL);
 
-    return (int)(end - start);
+    // return (int)(end - start);
 }
 
 int parallelRunMethod2(char **filesList, int numberOfRuns)
 {
-    time_t start, end;
+    printf("running method 2");
+    return 1;
+    // time_t start, end;
 
-    start = time(NULL);
+    // start = time(NULL);
 
-    int pid;
-    int cores = getNumCPUs();
-    int filesPerCore = numberOfRuns / cores;
-    int filesLeft = numberOfRuns % cores;
-    int filesToRun = filesPerCore;
-    while (*filesList != NULL)
-    {
-        pid = fork();
-        if (pid == 0)
-        {
-            compressFile(*filesList);
-            exit(0);
-        }
-        filesList++;
-        filesToRun--;
-        if (filesToRun == 0)
-        {
-            if (filesLeft > 0)
-            {
-                filesLeft--;
-                filesToRun = filesPerCore + 1;
-            }
-            else
-            {
-                filesToRun = filesPerCore;
-            }
-            while (wait(NULL) > 0)
-                ;
-        }
-    }
+    // int pid;
+    // int cores = getNumCPUs();
+    // int filesPerCore = numberOfRuns / cores;
+    // int filesLeft = numberOfRuns % cores;
+    // int filesToRun = filesPerCore;
+    // while (*filesList != NULL)
+    // {
+    //     pid = fork();
+    //     if (pid == 0)
+    //     {
+    //         compressFile(*filesList);
+    //         exit(0);
+    //     }
+    //     filesList++;
+    //     filesToRun--;
+    //     if (filesToRun == 0)
+    //     {
+    //         if (filesLeft > 0)
+    //         {
+    //             filesLeft--;
+    //             filesToRun = filesPerCore + 1;
+    //         }
+    //         else
+    //         {
+    //             filesToRun = filesPerCore;
+    //         }
+    //         while (wait(NULL) > 0)
+    //             ;
+    //     }
+    // }
 
-    while (wait(NULL) > 0)
-        ;
+    // while (wait(NULL) > 0)
+    //     ;
 
-    end = time(NULL);
+    // end = time(NULL);
 
-    return (int)(end - start);
+    // return (int)(end - start);
 }
 
 int parallelRunMethod3(char **filesList, int numberOfRuns)
 {
-    time_t start, end;
+    printf("running method 3");
+    return 1;
+    // time_t start, end;
 
-    start = time(NULL);
+    // start = time(NULL);
 
-    int pid;
-    int cores = getNumCPUs();
-    int filesPerCore = numberOfRuns / cores;
-    int filesLeft = numberOfRuns % cores;
-    int filesToRun = filesPerCore;
-    while (*filesList != NULL)
-    {
-        pid = fork();
-        if (pid == 0)
-        {
-            compressFile(*filesList);
-            exit(0);
-        }
-        filesList++;
-        filesToRun--;
-        if (filesToRun == 0)
-        {
-            if (filesLeft > 0)
-            {
-                filesLeft--;
-                filesToRun = filesPerCore + 1;
-            }
-            else
-            {
-                filesToRun = filesPerCore;
-            }
-        }
-    }
+    // int pid;
+    // int cores = getNumCPUs();
+    // int filesPerCore = numberOfRuns / cores;
+    // int filesLeft = numberOfRuns % cores;
+    // int filesToRun = filesPerCore;
+    // while (*filesList != NULL)
+    // {
+    //     pid = fork();
+    //     if (pid == 0)
+    //     {
+    //         compressFile(*filesList);
+    //         exit(0);
+    //     }
+    //     filesList++;
+    //     filesToRun--;
+    //     if (filesToRun == 0)
+    //     {
+    //         if (filesLeft > 0)
+    //         {
+    //             filesLeft--;
+    //             filesToRun = filesPerCore + 1;
+    //         }
+    //         else
+    //         {
+    //             filesToRun = filesPerCore;
+    //         }
+    //     }
+    // }
 
-    while (wait(NULL) > 0)
-        ;
+    // while (wait(NULL) > 0)
+    //     ;
 
-    end = time(NULL);
+    // end = time(NULL);
 
-    return (int)(end - start);
+    // return (int)(end - start);
 }
 
 double parallelRunWithStrategy(char **filesList, int numberOfRuns, int strategy)
@@ -209,7 +218,8 @@ double parallelRunWithStrategy(char **filesList, int numberOfRuns, int strategy)
     int *runs = malloc(sizeof(int) * numberOfRuns);
 
     // Choose the strategy
-    int (*parallelRunMethod)(char **, int) = NULL;
+    int (*parallelRunMethod)(char **, int) = NULL; // Function pointer that takes char** and int as arguments and returns int
+
     switch (strategy)
     {
     case 1:
@@ -348,7 +358,7 @@ int main(int argc, char **argv)
     }
 
     // Run each expirement numberOfRuns times, and get the average time
-    int numberOfRuns = 5;
+    int numberOfRuns = 2;
 
     /* ------------- Sequential ------------*/
 
@@ -360,13 +370,13 @@ int main(int argc, char **argv)
     /* ------------- Parallel With Custom Cores ------------- */
 
     // For each number of cores, run the parallel compression numberOfRuns times, and get the average time
-    for (int i = 2; i <= getNumCPUs(); i++)
-    {
-        printf("Starting parallel compression with  %d cores %d times\n", i, numberOfRuns);
-        double parallelTime = parallelWithCores(filesList, numberOfRuns, i, numberOfFiles);
-        printf("Avg. Parallel time after %d runs: %f\n", numberOfRuns, parallelTime);
-        clean_up(argv[1]);
-    }
+    // for (int i = 2; i <= getNumCPUs(); i++)
+    // {
+    //     printf("Starting parallel compression with  %d cores %d times\n", i, numberOfRuns);
+    //     double parallelTime = parallelWithCores(filesList, numberOfRuns, i, numberOfFiles);
+    //     printf("Avg. Parallel time after %d runs: %f\n", numberOfRuns, parallelTime);
+    //     clean_up(argv[1]);
+    // }
 
     /* ------------- Parallel With Strategies (Full NB_CORES) ------------- */
 
@@ -374,11 +384,11 @@ int main(int argc, char **argv)
     // Strategy 2 - Create NB_CORES tasks each time to proccess NB_CORES files, when all the files are proccessed, create another NB_CORES taks to proccess the next NB_CORES files, and so on until all the files are proccessed.
     // Strategy 3 - Create NB_CORES tasks at all, and assign multiple files compression for each task (as equal as possible)
 
-    // int strategy = 1;
-    // printf("Starting strategy %d parallel compression %d times\n", strategy, numberOfRuns);
-    // double parallelTime = parallelRunWithStrategy(filesList, numberOfRuns, strategy);
-    // printf("Avg. Parallel time after %d runs: %f\n", numberOfRuns, parallelTime);
-    // clean_up(argv[1]);
+    int strategy = 1;
+    printf("Starting strategy %d parallel compression %d times\n", strategy, numberOfRuns);
+    double parallelTime = parallelRunWithStrategy(filesList, numberOfRuns, strategy);
+    printf("Avg. Parallel time after %d runs: %f\n", numberOfRuns, parallelTime);
+    clean_up(argv[1]);
 
     return 0;
 }
