@@ -196,6 +196,7 @@ void case3WithCustomNT(int nt)
         }
     }
 
+    int total_count = 0;
     for (int i = 0; i < nt; i++)
     {
         void *local_count;
@@ -204,6 +205,7 @@ void case3WithCustomNT(int nt)
             fprintf(stderr, "Error joining thread\n");
             exit(2);
         }
+        total_count += (intptr_t)local_count;
         // Local counts are not summed as you only want time
     }
 }
@@ -238,6 +240,9 @@ int main()
     printf("Case 3 - Time taken: %lld milliseconds.\n", elapsedTime);
 
     // Case 4: Parallel counting with private counters
+    // This case will be slow because of: False sharing
+    // This means that the threads are writing to the same cache line
+    // This is because the array is contiguous in memory, and the threads are writing to the same cache line, causing cache invalidation, and the cache line to be written back to memory
     gettimeofday(&start, NULL);
     case4();
     gettimeofday(&end, NULL);
