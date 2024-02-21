@@ -243,6 +243,7 @@ int main()
     // This case will be slow because of: False sharing
     // This means that the threads are writing to the same cache line
     // This is because the array is contiguous in memory, and the threads are writing to the same cache line, causing cache invalidation, and the cache line to be written back to memory
+    // To solve it, we can use padding (bu size of cache line) to make sure that the threads are writing to different cache lines, because each core wwhen they modify the invalidate the others cache line, this causes the slowness
     gettimeofday(&start, NULL);
     case4();
     gettimeofday(&end, NULL);
