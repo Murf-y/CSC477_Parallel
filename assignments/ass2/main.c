@@ -4,17 +4,20 @@
 #include <sys/time.h>
 #include <stdbool.h>
 
-// Define the maximum size of the array
 #define RANDOM_SEED 100
-#define ARR_LENGTH 300000
-#define UPPER_LIMIT 1000
-#define LOWER_LIMIT 1
-#define NUM_THREADS 8
+
+#define ARR_LENGTH 10000000
+#define UPPER_NUMBER_LIMIT 1000
+#define LOWER_NUMBER_LIMIT 1
+#define RECURSIVE_LIMIT 100 // At this limit switch to insertion sort
+
+#define NUM_THREADS 16
+#define VERBOSE 0
 
 int CHUNK_SIZE_PER_THREAD = ARR_LENGTH / NUM_THREADS;
 int OFFSET = ARR_LENGTH % NUM_THREADS;
-int arr[ARR_LENGTH];
-int arr_copy[ARR_LENGTH];
+int *arr;
+int *arr_copy;
 
 long long timeInMilliseconds(void)
 {
@@ -30,8 +33,8 @@ void merge(int left, int mid, int right)
     int k = 0;
     int left_length = mid - left + 1;
     int right_length = right - mid;
-    int left_array[left_length];
-    int right_array[right_length];
+    int *left_array = (int *)malloc(left_length * sizeof(int));
+    int *right_array = (int *)malloc(right_length * sizeof(int));
 
     for (int i = 0; i < left_length; i++)
     {
@@ -73,12 +76,15 @@ void merge(int left, int mid, int right)
         k++;
         j++;
     }
+
+    free(left_array);
+    free(right_array);
 }
 
 void mergeSort(int left, int right)
 {
-    // if size is <= 100 then use insertion sor because it is faster for small arrays
-    if (right - left <= 100)
+    // if size is <= RECURSIVE_LIMIT then use insertion sor because it is faster for smaller arrays
+    if (right - left <= RECURSIVE_LIMIT)
     {
         for (int i = left + 1; i <= right; i++)
         {
@@ -164,21 +170,28 @@ void isSorted()
 int main()
 {
     srand(RANDOM_SEED);
-    int number_of_benchmarks = 10;
+    int number_of_runs = 20;
+    int time_sum = 0;
 
-    long long results[number_of_benchmarks];
+    long long results[number_of_runs];
 
-    for (int i = 0; i < number_of_benchmarks; i++)
+    arr = (int *)malloc(ARR_LENGTH * sizeof(int));
+    arr_copy = (int *)malloc(ARR_LENGTH * sizeof(int));
+
+    for (int i = 0; i < number_of_runs; i++)
     {
-        printf("Generating array of size = %d\n", ARR_LENGTH);
         for (int i = 0; i < ARR_LENGTH; i++)
         {
-            arr[i] = LOWER_LIMIT + (UPPER_LIMIT - LOWER_LIMIT) * ((double)rand() / RAND_MAX);
+            arr[i] = LOWER_NUMBER_LIMIT + (UPPER_NUMBER_LIMIT - LOWER_NUMBER_LIMIT) * ((double)rand() / RAND_MAX);
             arr_copy[i] = arr[i];
         }
 
-        printf("Starting parallel merge sort\n");
-        isSorted();
+        if (VERBOSE)
+        {
+            printf("Starting parallel merge sort\n");
+            isSorted();
+        }
+
         pthread_t threads[NUM_THREADS];
         long long parallel_start = timeInMilliseconds();
         for (long i = 0; i < NUM_THREADS; i++)
@@ -198,34 +211,53 @@ int main()
 
         mergeChunks(NUM_THREADS, 1);
         long long parallel_end = timeInMilliseconds();
-        printf("Time Elapsed for parallel in milliseconds: %lld ms\n", parallel_end - parallel_start);
         results[i] = parallel_end - parallel_start;
-        isSorted();
+        if (VERBOSE)
+        {
+            printf("Time Elapsed for parallel in milliseconds: %lld ms\n", parallel_end - parallel_start);
+            isSorted();
+        }
     }
 
-    int sum = 0;
-    for (int i = 0; i < number_of_benchmarks; i++)
+    for (int i = 0; i < number_of_runs; i++)
     {
-        sum += results[i];
+        time_sum += results[i];
     }
 
-    printf("Array size= %d, Number of threads= %d, Average time= %d\n", ARR_LENGTH, NUM_THREADS, sum / number_of_benchmarks);
+    printf("Parallel: Array size= %d | Number of runs= %d | Number of threads= %d | Average time= %d ms\n", ARR_LENGTH, number_of_runs, NUM_THREADS, time_sum / number_of_runs);
+
+    for (int i = 0; i < number_of_runs; i++)
+    {
+        // Replace arr with arr_copy to ensure that both expirements have the same elements (fair comparison)
+        for (int i = 0; i < ARR_LENGTH; i++)
+        {
+            arr[i] = arr_copy[i];
+        }
+
+        if (VERBOSE)
+        {
+            printf("Starting sequential merge sort\n");
+            isSorted();
+        }
+
+        long long sequential_start = timeInMilliseconds();
+        mergeSort(0, ARR_LENGTH - 1);
+        long long sequential_end = timeInMilliseconds();
+        results[i] = sequential_end - sequential_start;
+        if (VERBOSE)
+        {
+            printf("Time Elapsed for sequential in milliseconds: %lld ms\n", sequential_end - sequential_start);
+            isSorted();
+        }
+    }
+
+    time_sum = 0;
+    for (int i = 0; i < number_of_runs; i++)
+    {
+        time_sum += results[i];
+    }
+
+    printf("Sequential: Array size= %d | Number of runs= %d | Average time= %d ms\n", ARR_LENGTH, number_of_runs, time_sum / number_of_runs);
+
     return 0;
-
-    // Replace arr with arr_copy to ensure that both exp have same elments
-    // for (int i = 0; i < ARR_LENGTH; i++)
-    // {
-    //     arr[i] = arr_copy[i];
-    // }
-
-    // printf("\n =================================== \n");
-
-    // printf("Starting sequential merge sort\n");
-    // isSorted();
-    // long long sequential_start = timeInMilliseconds();
-    // mergeSort(0, ARR_LENGTH - 1);
-    // long long sequential_end = timeInMilliseconds();
-    // printf("Time Elapsed for sequential in milliseconds: %lld ms\n", sequential_end - sequential_start);
-    // isSorted();
-    // return 0;
 }
