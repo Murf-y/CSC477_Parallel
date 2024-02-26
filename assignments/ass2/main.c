@@ -6,13 +6,19 @@
 
 #define RANDOM_SEED 100
 
-#define ARR_LENGTH 10000000
+#define ARR_LENGTH 100000
 #define UPPER_NUMBER_LIMIT 1000
 #define LOWER_NUMBER_LIMIT 1
 #define RECURSIVE_LIMIT 100 // At this limit switch to insertion sort
 
-#define NUM_THREADS 16
+#define NUM_THREADS 8
 #define VERBOSE 0
+
+typedef struct thread_data
+{
+    int left;
+    int right;
+} thread_data;
 
 int CHUNK_SIZE_PER_THREAD = ARR_LENGTH / NUM_THREADS;
 int OFFSET = ARR_LENGTH % NUM_THREADS;
@@ -132,20 +138,21 @@ void *mergeSortThreaded(void *arg)
 
 void mergeChunks(int number, int aggregation)
 {
-    for (int i = 0; i < number; i = i + 2)
+    while (number >= 1)
     {
-        int left = i * (CHUNK_SIZE_PER_THREAD * aggregation);
-        int right = ((i + 2) * CHUNK_SIZE_PER_THREAD * aggregation) - 1;
-        int middle = left + (CHUNK_SIZE_PER_THREAD * aggregation) - 1;
-        if (right >= ARR_LENGTH)
+        for (int i = 0; i < number; i = i + 2)
         {
-            right = ARR_LENGTH - 1;
+            int left = i * (CHUNK_SIZE_PER_THREAD * aggregation);
+            int right = ((i + 2) * CHUNK_SIZE_PER_THREAD * aggregation) - 1;
+            int middle = left + (CHUNK_SIZE_PER_THREAD * aggregation) - 1;
+            if (right >= ARR_LENGTH)
+            {
+                right = ARR_LENGTH - 1;
+            }
+            merge(left, middle, right);
         }
-        merge(left, middle, right);
-    }
-    if (number / 2 >= 1)
-    {
-        mergeChunks(number / 2, aggregation * 2);
+        number = number / 2;
+        aggregation = aggregation * 2;
     }
 }
 
@@ -165,6 +172,61 @@ void isSorted()
         }
     }
     printf("== Sorted Array ==\n");
+}
+
+void *mergeSortThreadedVersion2(void *arg)
+{
+    thread_data *data = (thread_data *)arg;
+    int left = data->left;
+    int right = data->right;
+
+    if (left < right)
+    {
+        int mid = left + (right - left) / 2;
+
+        if (right - left <= RECURSIVE_LIMIT)
+        {
+            for (int i = left + 1; i <= right; i++)
+            {
+                int key = arr[i];
+                int j = i - 1;
+                while (j >= left && arr[j] > key)
+                {
+                    arr[j + 1] = arr[j];
+                    j = j - 1;
+                }
+                arr[j + 1] = key;
+            }
+            return NULL;
+        }
+
+        thread_data left_data = {left, mid};
+        thread_data right_data = {mid + 1, right};
+
+        pthread_t left_thread;
+        pthread_t right_thread;
+
+        int rt = pthread_create(&left_thread, NULL, mergeSortThreadedVersion2, (void *)&left_data);
+        if (rt)
+        {
+            printf("ERROR left thread -> %d\n", rt);
+            exit(-1);
+        }
+
+        rt = pthread_create(&right_thread, NULL, mergeSortThreadedVersion2, (void *)&right_data);
+        if (rt)
+        {
+            printf("ERROR right thread -> %d\n", rt);
+            exit(-1);
+        }
+
+        pthread_join(left_thread, NULL);
+        pthread_join(right_thread, NULL);
+
+        merge(left, mid, right);
+    }
+
+    return NULL;
 }
 
 int main()
@@ -259,5 +321,48 @@ int main()
 
     printf("Sequential: Array size= %d | Number of runs= %d | Average time= %d ms\n", ARR_LENGTH, number_of_runs, time_sum / number_of_runs);
 
+    for (int i = 0; i < number_of_runs; i++)
+    {
+        // Replace arr with arr_copy to ensure that both expirements have the same elements (fair comparison)
+        for (int i = 0; i < ARR_LENGTH; i++)
+        {
+            arr[i] = arr_copy[i];
+        }
+
+        if (VERBOSE)
+        {
+            printf("Starting parallel merge sort version 2\n");
+            isSorted();
+        }
+
+        long long parallel_version2_start = timeInMilliseconds();
+        thread_data data = {0, ARR_LENGTH - 1};
+        pthread_t main_thread;
+        int rt = pthread_create(&main_thread, NULL, mergeSortThreadedVersion2, (void *)&data);
+        if (rt)
+        {
+            printf("ERROR -> %d\n", rt);
+            exit(-1);
+        }
+        pthread_join(main_thread, NULL);
+
+        long long parallel_version2_end = timeInMilliseconds();
+        results[i] = parallel_version2_end - parallel_version2_start;
+        if (VERBOSE)
+        {
+            printf("Time Elapsed for parallel version 2 in milliseconds: %lld ms\n", parallel_version2_end - parallel_version2_start);
+            isSorted();
+        }
+    }
+
+    time_sum = 0;
+    for (int i = 0; i < number_of_runs; i++)
+    {
+        time_sum += results[i];
+    }
+
+    printf("Parallel Version 2: Array size= %d | Number of runs= %d |  Number of threads= %d | Average time= %d ms\n", ARR_LENGTH, number_of_runs, NUM_THREADS, time_sum / number_of_runs);
+
+    free(arr);
     return 0;
 }

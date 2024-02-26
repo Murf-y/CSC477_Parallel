@@ -128,6 +128,7 @@ for core, times in core_vs_array_size_parallel.items():
     plt.plot(times, marker='o', linestyle='-',
              label=f'{core} cores')
 
+
 plt.plot(array_size_vs_sequential, marker='o', linestyle='-',
          label=f'Sequential')
 
