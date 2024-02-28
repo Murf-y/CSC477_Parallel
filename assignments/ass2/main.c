@@ -6,13 +6,13 @@
 
 #define RANDOM_SEED 100
 
-#define ARR_LENGTH 100000
+#define ARR_LENGTH 1000000
 #define UPPER_NUMBER_LIMIT 1000
 #define LOWER_NUMBER_LIMIT 1
 #define RECURSIVE_LIMIT 100 // At this limit switch to insertion sort
 
 #define NUM_THREADS 8
-#define VERBOSE 0
+#define VERBOSE 1
 
 typedef struct thread_data
 {
@@ -136,23 +136,29 @@ void *mergeSortThreaded(void *arg)
     return NULL;
 }
 
-void mergeChunks(int number, int aggregation)
+void mergeChunks(int numChunks, int chunkSize)
 {
-    while (number >= 1)
+    while (numChunks >= 1)
     {
-        for (int i = 0; i < number; i = i + 2)
+        for (int i = 0; i < numChunks; i += 2)
         {
-            int left = i * (CHUNK_SIZE_PER_THREAD * aggregation);
-            int right = ((i + 2) * CHUNK_SIZE_PER_THREAD * aggregation) - 1;
-            int middle = left + (CHUNK_SIZE_PER_THREAD * aggregation) - 1;
-            if (right >= ARR_LENGTH)
+            int leftStart = i * chunkSize;
+            int rightEnd = ((i + 2) * chunkSize) - 1;
+            int middle = leftStart + chunkSize - 1;
+
+            // Adjust rightEnd to stay within array bounds
+            if (rightEnd >= ARR_LENGTH)
             {
-                right = ARR_LENGTH - 1;
+                rightEnd = ARR_LENGTH - 1;
             }
-            merge(left, middle, right);
+
+            // Merge current pair of chunks
+            merge(leftStart, middle, rightEnd);
         }
-        number = number / 2;
-        aggregation = aggregation * 2;
+
+        // Halve the number of chunks and double the chunk size
+        numChunks /= 2;
+        chunkSize *= 2;
     }
 }
 
@@ -271,7 +277,7 @@ int main()
             pthread_join(threads[i], NULL);
         }
 
-        mergeChunks(NUM_THREADS, 1);
+        mergeChunks(NUM_THREADS, CHUNK_SIZE_PER_THREAD);
         long long parallel_end = timeInMilliseconds();
         results[i] = parallel_end - parallel_start;
         if (VERBOSE)
