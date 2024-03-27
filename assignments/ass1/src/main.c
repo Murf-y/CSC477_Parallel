@@ -33,6 +33,7 @@ void compressFile(char *fileName)
 
     // Command cannot be longer than 50 characters raw_command = 10, fileName = 20, compressedFileName = 20
     char *command = malloc(sizeof(char) * 50);
+    // -k to keep the original file, -f to force, -1 to use the fastest compression
     strcpy(command, "gzip -k -f -1 ");
     strcat(command, fileName);
     system(command);
@@ -322,10 +323,10 @@ int main(int argc, char **argv)
 
     /* ------------- Sequential ------------*/
 
-    // printf("Starting sequential compression %d times\n", numberOfRuns);
-    // double sequentialTime = sequential(filesList, numberOfRuns);
-    // printf("Avg. Sequential time after %d runs: %f\n", numberOfRuns, sequentialTime);
-    // clean_up(argv[1]);
+    printf("Starting sequential compression %d times\n", numberOfRuns);
+    double sequentialTime = sequential(filesList, numberOfRuns);
+    printf("Avg. Sequential time after %d runs: %f\n", numberOfRuns, sequentialTime);
+    clean_up(argv[1]);
 
     /* ------------- Parallel With Custom Cores ------------- */
 
